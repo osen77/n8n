@@ -36,51 +36,6 @@
 
 在开始之前，请确保你的系统上已经安装了 [Docker](https://www.docker.com/get-started) 和 [Docker Compose](https://docs.docker.com/compose/install/)。
 
-### 文件结构
-
-将以下内容保存为 `docker-compose.yml` 文件。
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  n8n:
-    image: docker.n8n.io/n8nio/n8n
-    container_name: n8n
-    restart: unless-stopped
-    ports:
-      - "5679:5678" # 官方默认的是 5678:5678
-    volumes:
-      - data:/home/node/.n8n
-      - data_venv:/data # 虚拟环境将保存在这里
-    environment:
-      - NODE_FUNCTION_ALLOW_BUILTIN=*
-      - NODE_FUNCTION_ALLOW_EXTERNAL=*
-      - GENERIC_TIMEZONE=Asia/Shanghai
-      - TZ=Asia/Shanghai
-    user: root
-    entrypoint: ["tini", "--"]
-    command: >
-      /bin/sh -c "
-      apk add --no-cache py3-virtualenv && \
-      python3 -m venv /data/venv && \
-      chown -R node:node /data/venv && \
-      chmod +x /docker-entrypoint.sh && \
-      exec su -l node -c '/docker-entrypoint.sh \"$@\"'
-      "
-    networks:
-      - default
-
-volumes:
-  data:
-  data_venv: # 为虚拟环境定义 volume
-
-networks:
-  default:
-    external: true
-    name: n8n # 可以自定义网络名，或加入已有的网络
-```
-
 ### 部署步骤 (Linux / macOS / Windows)
 
 以下命令需要在终端 (Linux/macOS) 或 PowerShell/CMD (Windows) 中执行。
@@ -121,16 +76,20 @@ docker-compose down
 
 部署完成后，你可以在 n8n 的 `execute command` 节点中使用这个持久化的 Python 环境。
 
-1.  Python 可执行文件路径:
-    使用以下路径来调用 Python 解释器：
+### 1.  Python 可执行文件路径:
+使用以下路径来调用 Python 解释器：
 
-    ```
-    /data/venv/bin/python3
-    ```
-2.  在 execute command 节点中安装第三方包：
-    在 n8n 工作流中添加一个 execute command 节点。
-    在该节点中运行命令来安装第三方包。例如，安装 pandas 的命令是 /data/venv/bin/pip3 install pandas。这里的 /data/venv/bin/pip3 指向你之前创建并持久化的虚拟环境中的 pip 命令。
+```
+/data/venv/bin/python3
+```
 
-3.  在 execute command 节点中执行外部 Python 文件：
-    将你的 Python 文件（例如 xxx.py）放在你储存卷的目录中（例如 /home/node/.n8n/ 或其子文件夹）。
-    在 execute command 节点中，使用虚拟环境中的 Python 解释器来执行你的 Python 文件。例如：/data/venv/bin/python3 /home/node/.n8n/xxx.py
+### 2.  在 execute command 节点中安装第三方包：
+在 n8n 工作流中添加一个 execute command 节点。
+在该节点中运行命令来安装第三方包。例如，安装 pandas 的命令是 `/data/venv/bin/pip3 install pandas`。这里的 `/data/venv/bin/pip3` 指向你之前创建并持久化的虚拟环境中的 pip 命令。
+
+### 3.  在 execute command 节点中执行外部 Python 文件：
+将你的 Python 文件（例如 xxx.py）放在你储存卷的目录中（例如 /home/node/.n8n/ 或其子文件夹）。
+在 execute command 节点中，使用虚拟环境中的 Python 解释器来执行你的 Python 文件。例如：
+```sh
+/data/venv/bin/python3 /home/node/.n8n/xxx.py
+```
