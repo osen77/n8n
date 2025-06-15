@@ -85,12 +85,12 @@ networks:
 
 以下命令需要在终端 (Linux/macOS) 或 PowerShell/CMD (Windows) 中执行。
 
-**第一步：创建 Docker 网络 (仅需执行一次)**
+**第一步：下载 docker-compose**
 
-我们的 `docker-compose.yml` 配置 n8n 连接到一个名为 `n8n` 的外部网络。你需要先创建这个网络：
+手动下载上面的 `docker-compose.yml` 放在任意目录中，或者使用以下命令下载到终端当前目录
 
 ```sh
-docker network create n8n
+wget https://raw.githubusercontent.com/osen77/n8n/master/docker-compose.yml
 ```
 
 **第二步：启动 n8n 容器**
