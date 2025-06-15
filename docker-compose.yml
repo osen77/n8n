@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   n8n:
     image: docker.n8n.io/n8nio/n8n
@@ -15,15 +14,31 @@ services:
       - GENERIC_TIMEZONE=Asia/Shanghai
       - TZ=Asia/Shanghai
     user: root
-    entrypoint: ["tini", "--"]
-    command: >
-      /bin/sh -c "
-      apk add --no-cache py3-virtualenv && \
-      python3 -m venv /data/venv && \
-      chown -R node:node /data/venv && \
-      chmod +x /docker-entrypoint.sh && \
-      exec su -l node -c '/docker-entrypoint.sh \"$@\"'
-      "
+    # 2. 覆盖默认入口点，执行一个内联脚本
+    entrypoint: |
+      sh -c '
+        set -e
+        echo "Starting custom initialization..."
+
+        # 安装依赖 (如果尚未安装)
+        if ! apk -e info py3-virtualenv > /dev/null 2>&1; then
+          echo "Installing py3-virtualenv..."
+          apk add --no-cache py3-virtualenv
+        fi
+
+        # 创建虚拟环境 (如果尚不存在)
+        if [ ! -d "/data/venv/bin" ]; then
+          echo "Creating Python virtual environment in /data/venv..."
+          python3 -m venv /data/venv
+        fi
+
+        # 确保权限正确
+        echo "Setting permissions for /data/venv..."
+        chown -R node:node /data/venv
+
+        # 3. 切换到 "node" 用户并执行原始的 entrypoint
+        exec su -s /bin/sh -c "exec /docker-entrypoint.sh" node
+      '
     networks:
       - default
 
